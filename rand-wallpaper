@@ -1,0 +1,6 @@
+# /bin/bash
+# Dependencies: xwallpaper
+
+location="$HOME/.local/photos/wallpapers/";
+find $location | sort -R | head -n 1| xargs xwallpaper --stretch
+

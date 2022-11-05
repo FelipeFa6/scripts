@@ -1,0 +1,56 @@
+#!/bin/sh
+#
+# Static GIT page autogenerator for GIT servers
+# requires stagit to be installed.
+# git clone git://git.codemadness.org/stagit
+#
+# Functionality:
+# If the current folder has "index.html and repos"
+# they will be updated.
+
+# Declare the repository directory
+reposdir="/var/git/"
+
+# If destdir is not declared, ask to use current dir
+destdir="$1"
+getDestDir() {
+        if test "${destdir}" = ""; then
+                read -p "Update stagit here? $destdir (Y/n) [default: Y]:" input
+                input=$(echo $input | awk '{print tolower($0)}')
+                if [ "$input" = "y" ]; then
+                        destdir=$(pwd)
+                        break
+                elif [ "$input" = "n" ]; then
+                        exit
+                else
+                        # Invalid input
+                        # Retry the function
+                        getDestDir
+                fi
+        fi
+}
+getDestDir
+
+# make index.
+stagit-index "${reposdir}/"*/ > "${destdir}/index.html"
+
+# make files per repo.
+for dir in "${reposdir}/"*/; do
+        # strip .git suffix.
+        r=$(basename "${dir}")
+        d=$(basename "${dir}" ".git")
+        printf "%s... " "${d}"
+
+        mkdir -p "${destdir}/${d}"
+        cd "${destdir}/${d}" || continue
+        stagit -c ".cache" "${reposdir}/${r}"
+
+        # symlinks
+        ln -sf log.html index.html
+        ln -sf ../style.css style.css
+        ln -sf ../logo.png logo.png
+        ln -sf ../favicon.png favicon.png
+
+        echo "done"
+done
+
